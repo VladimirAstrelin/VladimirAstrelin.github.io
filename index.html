@@ -1,11 +1,544 @@
+<!-- index.html -->
 <!DOCTYPE html>
-<html>
+<html lang="ru"> <!-- Меняем язык на русский -->
 <head>
     <meta charset="UTF-8">
-    <title>My First Website</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🚀 ESP32 + SH1106 ДЕМО</title> <!-- Заголовок окна -->
+    
+    <style>
+        /* ========== ГЛОБАЛЬНЫЕ СТИЛИ: ОТСТУПЫ, ШРИФТЫ, ФОН ========== */
+        
+        /* Звёздочка * — применяем ко ВСЕМ элементам на странице */
+        * {
+            margin: 0;           /* Убираем внешние отступы */
+            padding: 0;          /* Убираем внутренние отступы */
+            box-sizing: border-box; /* Размеры элемента считаются вместе с границами и отступами */
+        }
+        
+        /* Стили для тега body (основное тело страницы) */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* Красивый шрифт без засечек */
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); /* Градиент: фиолетовый в синий */
+            min-height: 100vh;   /* Минимальная высота = высоте окна браузера */
+            padding: 20px;       /* Отступы от краёв экрана */
+            color: #333;         /* Цвет текста по умолчанию (тёмно-серый) */
+        }
+        
+        /* Контейнер — белая карточка по центру */
+        .container {
+            max-width: 900px;     /* Максимальная ширина 900 пикселей */
+            margin: 0 auto;      /* Центрируем горизонтально (auto = автоматические отступы) */
+            background: rgba(255, 255, 255, 0.95); /* Почти белый с небольшой прозрачностью */
+            border-radius: 20px; /* Скругляем углы */
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3); /* Большая тень для объёма */
+            overflow: hidden;    /* Чтобы ничего не вылезало за скруглённые углы */
+        }
+        
+        /* Шапка сайта (header) — градиент от синего к зелёному */
+        header {
+            background: linear-gradient(to right, #3498db, #2ecc71);
+            color: white;        /* Белый текст */
+            padding: 25px 30px;  /* Внутренние отступы */
+            display: flex;       /* Гибкий контейнер (элементы в строку) */
+            justify-content: space-between; /* Разнести по краям */
+            align-items: center; /* Выравнивание по вертикали */
+            flex-wrap: wrap;     /* Если не влезают — переносим на новую строку */
+            gap: 15px;           /* Расстояние между элементами */
+        }
+        
+        h1 {
+            font-size: 24px;
+            display: flex;       /* Иконка и текст в строку */
+            align-items: center;
+            gap: 10px;
+        }
+        
+        /* Блок статуса (подключён/отключён) */
+        .status {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: bold;
+            padding: 10px 15px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.2); /* Полупрозрачный фон */
+        }
+        
+        /* Кружок статуса */
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            animation: pulse 2s infinite; /* Анимация пульсации */
+        }
+        
+        /* Цвет кружка когда подключено */
+        .connected .status-dot {
+            background: #2ecc71; /* Зелёный */
+            box-shadow: 0 0 10px #2ecc71; /* Свечение */
+        }
+        
+        /* Цвет кружка когда отключено */
+        .disconnected .status-dot {
+            background: #e74c3c; /* Красный */
+            box-shadow: 0 0 10px #e74c3c;
+        }
+        
+        /* Анимация пульсации: плавно меняется прозрачность */
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }    /* полностью видим */
+            50% { opacity: 0.5; }       /* полупрозрачный */
+        }
+        
+        /* Стили для всех кнопок */
+        .btn {
+            padding: 12px 24px;   /* Отступы внутри кнопки */
+            border: none;         /* Убираем стандартную рамку */
+            border-radius: 10px;  /* Скругление */
+            font-size: 16px;
+            font-weight: 600;     /* Полужирный текст */
+            cursor: pointer;      /* Курсор в виде руки */
+            transition: all 0.3s ease; /* Плавные изменения при наведении */
+        }
+        
+        /* Отключённая кнопка (disabled) — полупрозрачная и не реагирует */
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        /* Синяя кнопка (основная) */
+        .btn-primary {
+            background: #3498db;
+            color: white;
+        }
+        .btn-primary:hover:not(:disabled) {
+            background: #2980b9;   /* Темнее при наведении */
+            transform: translateY(-2px); /* Легко поднимается */
+        }
+        
+        /* Красная кнопка (опасность) */
+        .btn-danger {
+            background: #e74c3c;
+            color: white;
+        }
+        .btn-danger:hover:not(:disabled) {
+            background: #c0392b;
+            transform: translateY(-2px);
+        }
+        
+        /* Зелёная кнопка (успех) */
+        .btn-success {
+            background: #2ecc71;
+            color: white;
+        }
+        
+        /* Основная область (main) — отступы */
+        main {
+            padding: 30px;
+        }
+        
+        /* Карточка — белый блок с тенью */
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .card h2 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+        
+        /* Группа полей ввода (текстовое поле + кнопка) */
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        /* Поле ввода текста */
+        input[type="text"] {
+            flex: 1;              /* Занимает всё свободное место */
+            padding: 12px;
+            font-size: 16px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-family: monospace; /* Моноширинный шрифт */
+        }
+        
+        input[type="text"]:focus {
+            outline: none;        /* Убираем стандартное выделение */
+            border-color: #3498db; /* Синяя рамка при фокусе */
+        }
+        
+        /* Кнопки управления светодиодом в ряд */
+        .led-controls {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        /* Область лога (чёрная консоль) */
+        .log-area {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 15px;
+            border-radius: 10px;
+            height: 300px;          /* Фиксированная высота */
+            overflow-y: auto;       /* Скролл, если много строк */
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+        }
+        
+        /* Одна запись в логе */
+        .log-entry {
+            padding: 5px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        /* Цвета для разных типов сообщений */
+        .log-success { color: #2ecc71; } /* Зелёный (успех) */
+        .log-error   { color: #e74c3c; } /* Красный (ошибка) */
+        .log-warning { color: #f39c12; } /* Оранжевый (предупреждение) */
+        .log-info    { color: #3498db; } /* Синий (информация) */
+    </style>
 </head>
 <body>
-    <h1>Hello GitHub Pages 👋</h1>
-    <p>This is my first website hosted for free!</p>
+    <div class="container">
+        <header>
+            <div>
+                <h1>🚀 ESP32 + SH1106 Тест</h1>
+            </div>
+            <div style="display: flex; gap: 10px; align-items: center;">
+                <!-- Индикатор статуса -->
+                <div id="statusIndicator" class="status disconnected">
+                    <div class="status-dot"></div>
+                    <span id="statusText">Отключено</span>
+                </div>
+                <!-- Кнопки управления соединением -->
+                <button id="connectBtn" class="btn btn-primary">Подключить</button>
+                <button id="disconnectBtn" class="btn btn-danger" disabled>Отключить</button>
+            </div>
+        </header>
+        
+        <main>
+            <!-- Секция отправки текста на дисплей -->
+            <div class="card">
+                <h2>📝 Отправить текст на дисплей</h2>
+                <div class="input-group">
+                    <input type="text" id="displayInput" placeholder="Введите текст..." maxlength="20">
+                    <button id="sendBtn" class="btn btn-success" disabled>Отправить</button>
+                </div>
+            </div>
+            
+            <!-- Управление светодиодом (LED) -->
+            <div class="card">
+                <h2>💡 Управление LED (GPIO 13)</h2>
+                <div class="led-controls">
+                    <button class="btn btn-success" onclick="sendLED('ON')" disabled id="ledOnBtn">LED ON</button>
+                    <button class="btn btn-danger" onclick="sendLED('OFF')" disabled id="ledOffBtn">LED OFF</button>
+                    <button class="btn btn-primary" onclick="sendLED('BLINK')" disabled id="ledBlinkBtn">LED BLINK</button>
+                </div>
+            </div>
+            
+            <!-- Лог событий -->
+            <div class="card">
+                <h2>📋 Лог событий</h2>
+                <div id="logArea" class="log-area"></div>
+                <button id="clearLog" class="btn btn-primary" style="margin-top: 10px;">Очистить лог</button>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // ================================================================
+        // ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ДЛЯ РАБОТЫ С WEB SERIAL API
+        // ================================================================
+        
+        let port = null;          // Объект последовательного порта (когда подключимся)
+        let reader = null;        // Читатель потока для получения данных из ESP32
+        let writer = null;        // Писатель потока для отправки команд в ESP32
+        let isConnected = false;  // Флаг: подключены ли мы к устройству
+        let isReading = false;    // Флаг: идёт ли процесс чтения данных
+        
+        // Находим все нужные элементы HTML по их id и сохраняем в переменные
+        const connectBtn = document.getElementById('connectBtn');
+        const disconnectBtn = document.getElementById('disconnectBtn');
+        const sendBtn = document.getElementById('sendBtn');
+        const displayInput = document.getElementById('displayInput');
+        const logArea = document.getElementById('logArea');
+        const statusIndicator = document.getElementById('statusIndicator');
+        const statusText = document.getElementById('statusText');
+        const clearLog = document.getElementById('clearLog');
+        
+        // Кнопки управления светодиодом
+        const ledOnBtn = document.getElementById('ledOnBtn');
+        const ledOffBtn = document.getElementById('ledOffBtn');
+        const ledBlinkBtn = document.getElementById('ledBlinkBtn');
+        
+        // ================================================================
+        // ФУНКЦИЯ: ДОБАВИТЬ СООБЩЕНИЕ В ЛОГ (с типом: success, error, warning, info)
+        // ================================================================
+        function addLog(message, type = 'info') {
+            const entry = document.createElement('div');       // Создаём элемент <div>
+            entry.className = `log-entry log-${type}`;         // Устанавливаем класс (цвет)
+            const time = new Date().toLocaleTimeString();      // Текущее время в формате ЧЧ:ММ:СС
+            entry.textContent = `[${time}] ${message}`;        // Текст записи
+            logArea.appendChild(entry);                        // Добавляем в конец списка логов
+            logArea.scrollTop = logArea.scrollHeight;          // Прокручиваем вниз, чтобы видеть новое сообщение
+        }
+        
+        // ================================================================
+        // ФУНКЦИЯ: ОБНОВИТЬ ВНЕШНИЙ ВИД СТАТУСА (подключено/отключено)
+        // ================================================================
+        function updateStatus(connected) {
+            isConnected = connected;
+            
+            if (connected) {
+                // Меняем стили и текст на "Подключено"
+                statusIndicator.className = 'status connected';
+                statusText.textContent = 'Подключено';
+                // Активные кнопки
+                connectBtn.disabled = true;
+                disconnectBtn.disabled = false;
+                sendBtn.disabled = false;
+                ledOnBtn.disabled = false;
+                ledOffBtn.disabled = false;
+                ledBlinkBtn.disabled = false;
+            } else {
+                // Меняем стили и текст на "Отключено"
+                statusIndicator.className = 'status disconnected';
+                statusText.textContent = 'Отключено';
+                // Блокируем все кнопки, кроме "Подключить"
+                connectBtn.disabled = false;
+                disconnectBtn.disabled = true;
+                sendBtn.disabled = true;
+                ledOnBtn.disabled = true;
+                ledOffBtn.disabled = true;
+                ledBlinkBtn.disabled = true;
+            }
+        }
+        
+        // ================================================================
+        // ФУНКЦИЯ: ОТПРАВИТЬ КОМАНДУ В ESP32 ЧЕРЕЗ ПОСЛЕДОВАТЕЛЬНЫЙ ПОРТ
+        // ================================================================
+        async function sendCommand(command) {
+            if (!writer) {
+                addLog('❌ Нет подключения', 'error');
+                return false;
+            }
+            try {
+                const encoder = new TextEncoder();               // Преобразователь текста в байты
+                const data = encoder.encode(`${command}\n`);    // Добавляем символ новой строки
+                await writer.write(data);                        // Отправляем в порт
+                addLog(`📤 Отправлено: ${command}`, 'info');     // Пишем в лог
+                return true;
+            } catch (error) {
+                addLog(`❌ Ошибка отправки: ${error.message}`, 'error');
+                return false;
+            }
+        }
+        
+        // ================================================================
+        // ФУНКЦИЯ: ОТПРАВИТЬ ТЕКСТ НА ДИСПЛЕЙ
+        // ================================================================
+        async function sendToDisplay(text) {
+            await sendCommand(`DISPLAY:${text}`);
+            displayInput.value = '';   // Очищаем поле ввода
+        }
+        
+        // ================================================================
+        // ФУНКЦИЯ: ОТПРАВИТЬ КОМАНДУ ДЛЯ УПРАВЛЕНИЯ СВЕТОДИОДОМ (ON/OFF/BLINK)
+        // ================================================================
+        async function sendLED(mode) {
+            await sendCommand(`LED:${mode}`);
+        }
+        
+        // ================================================================
+        // ФУНКЦИЯ: ЗАКРЫТЬ СОЕДИНЕНИЕ И ОСВОБОДИТЬ РЕСУРСЫ (порт, reader, writer)
+        // ================================================================
+        async function cleanupConnection() {
+            isReading = false;   // Останавливаем цикл чтения
+            
+            // Если есть reader — отменяем и освобождаем
+            if (reader) {
+                try { await reader.cancel(); } catch (e) {}
+                try { reader.releaseLock(); } catch (e) {}
+                reader = null;
+            }
+            
+            // Если есть writer — освобождаем
+            if (writer) {
+                try { writer.releaseLock(); } catch (e) {}
+                writer = null;
+            }
+            
+            // Если порт открыт — закрываем
+            if (port) {
+                try { await port.close(); } catch (e) {}
+                port = null;
+            }
+            
+            // Небольшая задержка, чтобы всё успело завершиться
+            await new Promise(resolve => setTimeout(resolve, 200));
+        }
+        
+        // ================================================================
+        // ФУНКЦИЯ: ЧТЕНИЕ ДАННЫХ ИЗ ПОРТА (ПОСТОЯННЫЙ ЦИКЛ)
+        // Этот цикл работает в фоне и обрабатывает сообщения от ESP32
+        // ================================================================
+        async function readData() {
+            try {
+                reader = port.readable.getReader();            // Получаем читатель потока
+                const decoder = new TextDecoder();              // Преобразователь байтов в текст
+                let buffer = '';                                // Буфер для накопления неполных строк
+                
+                while (isReading) {
+                    try {
+                        const { value, done } = await reader.read();  // Читаем порцию данных
+                        if (done) break;                         // Если поток закрыт — выходим
+                        
+                        if (value) {
+                            // Декодируем полученные байты в строку, добавляем в буфер
+                            buffer += decoder.decode(value, { stream: true });
+                            const lines = buffer.split('\n');     // Разбиваем по символу новой строки
+                            buffer = lines.pop();                 // Последний кусок может быть неполным
+                            
+                            // Обрабатываем каждую полную строку
+                            for (const line of lines) {
+                                const trimmed = line.trim();      // Убираем пробелы по краям
+                                if (!trimmed) continue;           // Пустые строки пропускаем
+                                
+                                // Сравниваем с известными кодами ответов от ESP32
+                                if (trimmed === 'ARDUINO_READY') {
+                                    addLog('✅ ESP32 готов!', 'success');
+                                } else if (trimmed === 'BTN_TEST_PRESSED') {
+                                    addLog('🎮 Кнопка нажата!', 'success');
+                                } else if (trimmed === 'DISPLAY_OK') {
+                                    addLog('✅ Текст показан на дисплее', 'success');
+                                } else if (trimmed === 'LED_ON_OK') {
+                                    addLog('💡 LED включён', 'success');
+                                } else if (trimmed === 'LED_OFF_OK') {
+                                    addLog('💡 LED выключен', 'success');
+                                } else if (trimmed === 'LED_BLINK_OK') {
+                                    addLog('⚡ LED: режим мигания', 'success');
+                                } else {
+                                    // Любое другое сообщение выводим как есть
+                                    addLog(`📨 ESP32: ${trimmed}`, 'info');
+                                }
+                            }
+                        }
+                    } catch (error) {
+                        if (isReading) {
+                            addLog(`❌ Ошибка чтения: ${error.message}`, 'error');
+                        }
+                        break;
+                    }
+                }
+            } catch (error) {
+                if (isReading) {
+                    addLog(`❌ Ошибка потока: ${error.message}`, 'error');
+                }
+            } finally {
+                // Если были подключены, а чтение прервалось — значит соединение потеряно
+                if (isConnected) {
+                    updateStatus(false);
+                    addLog('⚠️ Соединение потеряно', 'warning');
+                }
+            }
+        }
+        
+        // ================================================================
+        // ОБРАБОТЧИК КНОПКИ "ПОДКЛЮЧИТЬ"
+        // ================================================================
+        connectBtn.addEventListener('click', async () => {
+            try {
+                await cleanupConnection();   // На всякий случай закрываем старое соединение
+                addLog('🔄 Устанавливаем соединение...', 'warning');
+                
+                // Проверка: поддерживает ли браузер Web Serial API?
+                if (!('serial' in navigator)) {
+                    addLog('❌ Браузер не поддерживает Web Serial API', 'error');
+                    addLog('💡 Используйте Chrome/Edge 89+ или Opera 76+', 'warning');
+                    return;
+                }
+                
+                // Показываем диалог выбора COM-порта (только устройства, подключённые по USB)
+                port = await navigator.serial.requestPort();
+                // Открываем порт с настройками, совпадающими с Arduino (115200, 8 бит, 1 стоп-бит)
+                await port.open({ 
+                    baudRate: 115200,
+                    dataBits: 8,
+                    stopBits: 1,
+                    parity: "none",
+                    flowControl: "none"
+                });
+                
+                // Получаем "писатель" для отправки данных
+                writer = port.writable.getWriter();
+                isReading = true;                // Разрешаем чтение
+                updateStatus(true);              // Обновляем интерфейс: мы подключены
+                addLog('✅ Подключено к ESP32!', 'success');
+                
+                // Запускаем асинхронный процесс чтения данных из порта
+                readData();
+                
+            } catch (error) {
+                if (error.name === 'NotFoundError') {
+                    addLog('❌ Порт не выбран (вы отменили выбор)', 'error');
+                } else {
+                    addLog(`❌ Ошибка подключения: ${error.message}`, 'error');
+                }
+                await cleanupConnection();       // В случае ошибки подчищаем
+                updateStatus(false);
+            }
+        });
+        
+        // ================================================================
+        // ОБРАБОТЧИК КНОПКИ "ОТКЛЮЧИТЬ"
+        // ================================================================
+        disconnectBtn.addEventListener('click', async () => {
+            await cleanupConnection();
+            updateStatus(false);
+            addLog('✅ Соединение разорвано', 'success');
+        });
+        
+        // ================================================================
+        // ОБРАБОТЧИК КНОПКИ "ОТПРАВИТЬ" (текст на дисплей)
+        // ================================================================
+        sendBtn.addEventListener('click', () => {
+            const text = displayInput.value.trim();   // Берём текст из поля, убираем пробелы по краям
+            if (text) {
+                sendToDisplay(text);
+            }
+        });
+        
+        // ================================================================
+        // ОБРАБОТЧИК НАЖАТИЯ ENTER В ПОЛЕ ВВОДА ТЕКСТА
+        // ================================================================
+        displayInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !sendBtn.disabled) {
+                sendBtn.click();   // Имитируем нажатие кнопки "Отправить"
+            }
+        });
+        
+        // ================================================================
+        // ОБРАБОТЧИК КНОПКИ "ОЧИСТИТЬ ЛОГ"
+        // ================================================================
+        clearLog.addEventListener('click', () => {
+            logArea.innerHTML = '';                // Удаляем всё содержимое лога
+            addLog('🗑️ Лог очищен', 'info');
+        });
+        
+        // ================================================================
+        // ПЕРВОНАЧАЛЬНОЕ СООБЩЕНИЕ ПРИ ЗАГРУЗКЕ СТРАНИЦЫ
+        // ================================================================
+        addLog('🚀 Интерфейс готов. Нажмите "Подключить"', 'info');
+    </script>
 </body>
 </html>

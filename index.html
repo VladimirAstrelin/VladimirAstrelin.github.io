@@ -36,10 +36,40 @@
 
         <main class="content">
 
+            <div id="welcomeScreen" class="welcome-screen">
+                <div class="welcome-content">
+                    <h1>🧪 Virtual Lab</h1>
+                    <p class="subtitle">Експериментальні Web API проекти</p>
+                    
+                    <div class="features">
+                        <div class="feature-card">
+                            <span class="icon">🔌</span>
+                            <h3>Web Serial API</h3>
+                            <p>Взаємодія з послідовними портами</p>
+                        </div>
+                        
+                        <div class="feature-card">
+                            <span class="icon">📡</span>
+                            <h3>Web Bluetooth API</h3>
+                            <p>Підключення до Bluetooth пристроїв</p>
+                        </div>
+                        
+                        <div class="feature-card">
+                            <span class="icon">📝</span>
+                            <h3>File System API</h3>
+                            <p>Робота з локальними файлами</p>
+                        </div>
+                    </div>
+                    
+                    <p class="instruction">👈 Оберіть проект з меню зліва</p>
+                </div>
+            </div>
+
             <iframe
                 id="projectFrame"
                 src=""
-                frameborder="0">
+                frameborder="0"
+                style="display: none;">
             </iframe>
 
         </main>

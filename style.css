@@ -9,6 +9,7 @@ body {
     background: #111;
     color: white;
     height: 100vh;
+    overflow: hidden;
 }
 
 .container {
@@ -18,6 +19,7 @@ body {
 
 .sidebar {
     width: 260px;
+    min-width: 260px;
     background: #1b1b1b;
     padding: 20px;
     border-right: 1px solid #333;
@@ -25,6 +27,8 @@ body {
     display: flex;
     flex-direction: column;
     gap: 12px;
+
+    overflow-y: auto;
 }
 
 .sidebar h2 {
@@ -41,6 +45,8 @@ body {
     transition: 0.2s;
 
     text-align: left;
+
+    font-size: 16px;
 }
 
 .sidebar button:hover {
@@ -50,11 +56,41 @@ body {
 .content {
     flex: 1;
     background: #181818;
+    overflow: hidden;
 }
 
 #projectFrame {
     width: 100%;
     height: 100%;
+    border: none;
     background: white;
 }
 
+/* =========================
+   MOBILE VERSION
+========================= */
+
+@media (max-width: 768px) {
+
+    .container {
+        flex-direction: column;
+    }
+
+    .sidebar {
+        width: 100%;
+        min-width: 100%;
+        height: auto;
+        border-right: none;
+        border-bottom: 1px solid #333;
+    }
+
+    .content {
+        flex: 1;
+        height: 100%;
+    }
+
+    #projectFrame {
+        width: 100%;
+        height: calc(100vh - 320px);
+    }
+}

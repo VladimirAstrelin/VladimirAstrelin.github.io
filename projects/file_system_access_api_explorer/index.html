@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Webbie Explorer - Файловый менеджер</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app">
+        <!-- Верхняя панель инструментов -->
+        <div class="toolbar">
+            <div class="toolbar-group">
+                <button id="backBtn" title="Назад (Alt+Left)">◀ Назад</button>
+                <button id="forwardBtn" title="Вперёд (Alt+Right)">Вперёд ▶</button>
+                <button id="upBtn" title="Вверх (Backspace)">⬆ Вверх</button>
+            </div>
+            <div class="toolbar-group">
+                <button id="newFolderBtn" title="Новая папка (F7)">📁 Новая папка</button>
+                <button id="newFileBtn" title="Новый файл (F5)">📄 Новый файл</button>
+            </div>
+            <div class="toolbar-group">
+                <button id="copyBtn" title="Копировать (F8)">📋 Копировать</button>
+                <button id="pasteBtn" title="Вставить (F9)">📎 Вставить</button>
+                <button id="deleteBtn" title="Удалить (Del)">🗑 Удалить</button>
+                <button id="renameBtn" title="Переименовать (F2)">✏ Переименовать</button>
+            </div>
+            <div class="toolbar-group">
+                <button id="refreshBtn" title="Обновить (F5)">🔄 Обновить</button>
+                <button id="propertiesBtn" title="Свойства (Alt+Enter)">ℹ Свойства</button>
+            </div>
+        </div>
+
+        <!-- Адресная строка -->
+        <div class="address-bar">
+            <span class="label">Путь:</span>
+            <span id="currentPath" class="path">/</span>
+            <button id="selectRootBtn" class="small-btn" title="Выбрать корневую папку">📂 Выбрать корень</button>
+        </div>
+
+        <!-- Основная таблица файлов -->
+        <div class="file-list-container">
+            <table class="file-list" id="fileList">
+                <thead>
+                    <tr>
+                        <th class="col-name">Имя</th>
+                        <th class="col-size">Размер</th>
+                        <th class="col-modified">Дата изменения</th>
+                        <th class="col-type">Тип</th>
+                    </tr>
+                </thead>
+                <tbody id="fileListBody">
+                    <tr>
+                        <td colspan="4" class="loading">Выберите корневую папку для начала...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Статусная строка (как в Far Manager) -->
+        <div class="status-bar">
+            <div class="status-left">
+                <span id="selectedCount">0</span> файлов выбрано
+            </div>
+            <div class="status-center">
+                <span id="totalItems">0</span> элементов
+            </div>
+            <div class="status-right">
+                <span id="freeSpace"></span>
+            </div>
+        </div>
+
+        <!-- Модальное окно для свойств -->
+        <div id="propertiesModal" class="modal">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h3>Свойства файла/папки</h3>
+                <div id="propertiesContent"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

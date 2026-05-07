@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Webbie - Текстовый редактор в браузере</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app">
+        <!-- Шапка приложения -->
+        <header class="toolbar">
+            <div class="toolbar-group">
+                <button id="newBtn" class="btn" title="Новый файл (Ctrl+N)">📄 Новый</button>
+                <button id="openBtn" class="btn" title="Открыть файл (Ctrl+O)">📂 Открыть</button>
+                <button id="saveBtn" class="btn" title="Сохранить (Ctrl+S)">💾 Сохранить</button>
+                <button id="saveAsBtn" class="btn" title="Сохранить как...">📎 Сохранить как...</button>
+            </div>
+            <div class="toolbar-group">
+                <button id="increaseFontBtn" class="btn" title="Увеличить шрифт">🔍+</button>
+                <button id="decreaseFontBtn" class="btn" title="Уменьшить шрифт">🔍-</button>
+                <button id="toggleDarkModeBtn" class="btn" title="Тёмная тема">🌙</button>
+            </div>
+        </header>
+
+        <!-- Статусная строка -->
+        <div class="statusbar">
+            <span id="fileName">Нет открытого файла</span>
+            <span id="fileSize"></span>
+            <span id="fileInfo"></span>
+        </div>
+
+        <!-- Основная область редактирования -->
+        <div class="editor-container">
+            <textarea id="editor" placeholder="Введите текст здесь или откройте существующий файл..."></textarea>
+        </div>
+
+        <!-- Подсказки -->
+        <footer class="help-text">
+            <span>💡 Подсказки: Ctrl+S — сохранить | Ctrl+O — открыть | Ctrl+N — новый</span>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

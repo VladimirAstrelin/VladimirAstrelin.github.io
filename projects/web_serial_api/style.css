@@ -359,6 +359,7 @@ main {
     border-radius: 5px;
     background: #ddd;
     outline: none;
+    appearance: none;
     -webkit-appearance: none;
 }
 

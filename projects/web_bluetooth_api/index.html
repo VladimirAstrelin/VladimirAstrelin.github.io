@@ -3,79 +3,552 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>ESP32-STM32 Bridge Controller</title>
-    <link rel="stylesheet" href="style.css">
+    <title>ESP32 BLE Controller</title>
+    <style>
+        /* ========== CSS СТИЛИ ========== */
+        /* Сброс отступов */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        /* Красивый градиентный фон */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        /* Белая карточка с тенью */
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 500px;
+            width: 100%;
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+        
+        /* Блок статуса подключения */
+        .status {
+            background: #f0f0f0;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .status-text {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .connected {
+            color: #4CAF50;  /* Зелёный для "Подключено" */
+        }
+        
+        .disconnected {
+            color: #f44336;   /* Красный для "Отключено" */
+        }
+        
+        /* Большой счётчик */
+        .counter-value {
+            font-size: 48px;
+            font-weight: bold;
+            text-align: center;
+            margin: 20px 0;
+            color: #667eea;
+        }
+        
+        /* Стили для всех кнопок */
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 16px;
+            cursor: pointer;
+            width: 100%;
+            margin-bottom: 15px;
+            transition: transform 0.2s, background 0.2s;
+        }
+        
+        /* Анимация при наведении */
+        button:hover:not(:disabled) {
+            background: #5a67d8;
+            transform: translateY(-2px);
+        }
+        
+        /* Анимация при нажатии */
+        button:active:not(:disabled) {
+            transform: translateY(0);
+        }
+        
+        /* Отключённые кнопки (серые) */
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        
+        /* Группа кнопок LED в две колонки */
+        .button-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        /* Специальные цвета для LED кнопок */
+        .led-on {
+            background: #48bb78;  /* Зелёный */
+        }
+        
+        .led-on:hover:not(:disabled) {
+            background: #38a169;
+        }
+        
+        .led-off {
+            background: #f56565;  /* Красный */
+        }
+        
+        .led-off:hover:not(:disabled) {
+            background: #e53e3e;
+        }
+        
+        /* Окно лога сообщений */
+        .log {
+            background: #f7f7f7;
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 20px;
+            max-height: 200px;
+            overflow-y: auto;  /* Скролл если много сообщений */
+            font-size: 12px;
+            font-family: monospace;
+        }
+        
+        .log-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #333;
+        }
+        
+        /* Каждое сообщение в логе */
+        .log-entry {
+            color: #555;
+            margin-bottom: 5px;
+            border-left: 3px solid #667eea;
+            padding-left: 10px;
+            word-wrap: break-word;
+        }
+        
+        /* Индикатор LED (кружок) */
+        .indicator {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            margin-right: 10px;
+            vertical-align: middle;
+        }
+        
+        .indicator-on {
+            background: #48bb78;
+            box-shadow: 0 0 10px #48bb78;  /* Свечение */
+        }
+        
+        .indicator-off {
+            background: #ccc;
+        }
+        
+        /* Кнопка очистки лога */
+        .clear-log {
+            background: #ff9800;
+            margin-top: 10px;
+        }
+        
+        .clear-log:hover:not(:disabled) {
+            background: #f57c00;
+        }
+    </style>
 </head>
 <body>
     <div class="container">
-        <header>
-            <h1>🔌 ESP32-STM32 Bridge</h1>
-            <p>Управление LED через BLE | Web Bluetooth API</p>
-        </header>
-
-        <!-- Состояние подключения -->
-        <div class="connection-status">
-            <div class="status-indicator" id="connectionStatus"></div>
-            <span id="connectionText">Не подключено</span>
-            <button id="connectBtn" class="btn btn-primary">🔗 Подключиться</button>
-            <button id="disconnectBtn" class="btn btn-secondary" disabled>🔌 Отключить</button>
+        <h1>🎮 ESP32 BLE Control</h1>
+        <div class="subtitle">Управление через Bluetooth</div>
+        
+        <!-- Блок статуса -->
+        <div class="status">
+            <div class="status-text">
+                <span id="ledIndicator" class="indicator indicator-off"></span>
+                <span>Состояние: </span>
+                <span id="connectionStatus" class="disconnected">Отключено</span>
+            </div>
+            <div id="deviceName"></div>
         </div>
-
-        <!-- Основная панель управления -->
-        <div class="control-panel" id="controlPanel" style="display: none;">
-            
-            <!-- Блок управления LED на ESP32 -->
-            <div class="card">
-                <h2>🎛️ ESP32 LED (GPIO2)</h2>
-                <div class="button-group">
-                    <button id="espLedOnBtn" class="btn btn-success">🟢 ВКЛЮЧИТЬ</button>
-                    <button id="espLedOffBtn" class="btn btn-danger">🔴 ВЫКЛЮЧИТЬ</button>
-                </div>
-                <div class="status-row">
-                    <span class="status-label">Статус:</span>
-                    <span id="espLedStatus" class="status-badge status-off">ВЫКЛ</span>
-                </div>
-            </div>
-
-            <!-- Блок управления LED на STM32 -->
-            <div class="card">
-                <h2>⚙️ STM32 LED (PB8)</h2>
-                <div class="button-group">
-                    <button id="stmLedOnBtn" class="btn btn-success">🟢 ВКЛЮЧИТЬ</button>
-                    <button id="stmLedOffBtn" class="btn btn-danger">🔴 ВЫКЛЮЧИТЬ</button>
-                </div>
-                <div class="status-row">
-                    <span class="status-label">Статус:</span>
-                    <span id="stmLedStatus" class="status-badge status-off">ВЫКЛ</span>
-                </div>
-            </div>
-
-            <!-- Дополнительная информация -->
-            <div class="card">
-                <h2>📊 Системная информация</h2>
-                <div class="status-row">
-                    <span class="status-label">ESP32 кнопка:</span>
-                    <span id="espButtonStatus" class="status-badge status-off">ОТПУЩЕНА</span>
-                </div>
-                <div class="status-row">
-                    <span class="status-label">STM32 кнопка:</span>
-                    <span id="stmButtonStatus" class="status-badge status-off">ОТПУЩЕНА</span>
-                </div>
-                <hr>
-                <div class="status-row">
-                    <span class="status-label">BLE статус:</span>
-                    <span id="bleStatus" class="status-badge status-off">ОТКЛЮЧЕН</span>
-                </div>
-            </div>
+        
+        <!-- Счётчик -->
+        <div id="counterDisplay" class="counter-value">Счётчик: 0</div>
+        
+        <!-- Кнопки управления -->
+        <button id="connectBtn">🔌 Подключиться к ESP32</button>
+        <button id="disconnectBtn" disabled>🔌 Отключиться</button>
+        
+        <!-- Группа кнопок LED -->
+        <div class="button-group">
+            <button id="ledOnBtn" class="led-on" disabled>💡 Включить LED</button>
+            <button id="ledOffBtn" class="led-off" disabled>💡 Выключить LED</button>
         </div>
-
-        <!-- Информационный футер -->
-        <footer>
-            <p>Web Bluetooth API — управление ESP32-S3 через BLE</p>
-            <p>Требуется браузер Chrome/Edge/Opera на Android/Windows/macOS</p>
-        </footer>
+        
+        <!-- Окно лога -->
+        <div class="log">
+            <div class="log-title">📝 Лог событий:</div>
+            <div id="logContent"></div>
+        </div>
+        
+        <!-- Кнопка очистки лога -->
+        <button id="clearLogBtn" class="clear-log">🗑️ Очистить лог</button>
     </div>
 
-    <script src="script.js"></script>
+    <script>
+        // ============================================================================
+        // JAVASCRIPT КОД - работает в браузере
+        // ============================================================================
+        
+        // ========== НАСТРОЙКИ BLE ==========
+        // Эти UUID должны совпадать с теми, что в коде ESP32
+        const SERVICE_UUID = "4fafc201-1fb5-459e-8fcc-c5c9c331914b";
+        const CHARACTERISTIC_UUID = "beb5483e-36e1-4688-b7f5-ea07361b26a8";
+        
+        // ========== ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ==========
+        let device = null;           // BLE устройство
+        let server = null;           // GATT сервер
+        let characteristic = null;   // Характеристика для обмена данными
+        let isConnected = false;     // Флаг подключения
+        let currentCounter = 0;      // Текущее значение счётчика
+        
+        // ========== DOM ЭЛЕМЕНТЫ (ссылки на HTML элементы) ==========
+        const connectBtn = document.getElementById('connectBtn');
+        const disconnectBtn = document.getElementById('disconnectBtn');
+        const ledOnBtn = document.getElementById('ledOnBtn');
+        const ledOffBtn = document.getElementById('ledOffBtn');
+        const clearLogBtn = document.getElementById('clearLogBtn');
+        const connectionStatus = document.getElementById('connectionStatus');
+        const deviceNameSpan = document.getElementById('deviceName');
+        const counterDisplay = document.getElementById('counterDisplay');
+        const logContent = document.getElementById('logContent');
+        const ledIndicator = document.getElementById('ledIndicator');
+        
+        // ========== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ==========
+        
+        /**
+         * Добавляет сообщение в лог
+         * @param {string} message - текст сообщения
+         * @param {string} type - тип сообщения: info, success, error, warning, send, receive
+         */
+        function addLog(message, type = 'info') {
+            const logEntry = document.createElement('div');
+            logEntry.className = 'log-entry';
+            
+            // Эмодзи для разных типов сообщений
+            const emoji = {
+                info: 'ℹ️',
+                success: '✅',
+                error: '❌',
+                warning: '⚠️',
+                send: '📤',
+                receive: '📥'
+            };
+            
+            // Добавляем время и сообщение
+            logEntry.textContent = `[${new Date().toLocaleTimeString()}] ${emoji[type] || '•'} ${message}`;
+            logContent.appendChild(logEntry);
+            
+            // Автоматически прокручиваем лог вниз
+            logContent.scrollTop = logContent.scrollHeight;
+            
+            // Также выводим в консоль браузера для отладки
+            console.log(message);
+        }
+        
+        /**
+         * Очищает лог сообщений
+         */
+        function clearLog() {
+            logContent.innerHTML = '';  // Удаляем всё содержимое
+            addLog('Лог очищен', 'info');
+        }
+        
+        /**
+         * Обновляет интерфейс в зависимости от состояния подключения
+         */
+        function updateUI() {
+            if (isConnected) {
+                connectionStatus.textContent = 'Подключено';
+                connectionStatus.className = 'connected';
+                connectBtn.disabled = true;      // Отключаем кнопку "Подключиться"
+                disconnectBtn.disabled = false;  // Включаем кнопку "Отключиться"
+                ledOnBtn.disabled = false;       // Включаем кнопки LED
+                ledOffBtn.disabled = false;
+            } else {
+                connectionStatus.textContent = 'Отключено';
+                connectionStatus.className = 'disconnected';
+                connectBtn.disabled = false;     // Включаем кнопку "Подключиться"
+                disconnectBtn.disabled = true;   // Отключаем кнопку "Отключиться"
+                ledOnBtn.disabled = true;        // Отключаем кнопки LED
+                ledOffBtn.disabled = true;
+            }
+        }
+        
+        /**
+         * Обновляет отображение счётчика на странице
+         * @param {number} value - новое значение счётчика
+         */
+        function updateCounter(value) {
+            currentCounter = value;
+            counterDisplay.textContent = `Счётчик: ${currentCounter}`;
+        }
+        
+        // ========== ОБРАБОТКА ДАННЫХ ОТ ESP32 ==========
+        
+        /**
+         * Обрабатывает данные, полученные от ESP32
+         * @param {string} data - строка с данными от ESP32
+         */
+        function handleDataFromESP32(data) {
+            addLog(`Получено: ${data}`, 'receive');
+            
+            // Проверяем тип полученных данных
+            if (data.startsWith('BUTTON_UP:')) {
+                // Нажата кнопка UP на ESP32, формат: "BUTTON_UP:5"
+                const value = parseInt(data.split(':')[1]);
+                updateCounter(value);
+                addLog(`🔘 Нажата кнопка UP на ESP32! Счётчик: ${value}`, 'warning');
+            } 
+            else if (data.startsWith('BUTTON_DOWN:')) {
+                // Нажата кнопка DOWN на ESP32
+                const value = parseInt(data.split(':')[1]);
+                updateCounter(value);
+                addLog(`🔘 Нажата кнопка DOWN на ESP32! Счётчик: ${value}`, 'warning');
+            }
+            else if (data === 'LED_ON_OK') {
+                // Подтверждение включения LED
+                addLog(`💡 LED на ESP32 включён`, 'success');
+                ledIndicator.className = 'indicator indicator-on';
+            }
+            else if (data === 'LED_OFF_OK') {
+                // Подтверждение выключения LED
+                addLog(`💡 LED на ESP32 выключен`, 'info');
+                ledIndicator.className = 'indicator indicator-off';
+            }
+            else {
+                addLog(`⚠️ Неизвестные данные: ${data}`, 'warning');
+            }
+        }
+        
+        // ========== ОТПРАВКА КОМАНД НА ESP32 ==========
+        
+        /**
+         * Отправляет команду на ESP32
+         * @param {string} command - команда для отправки (LED_ON, LED_OFF)
+         * @returns {boolean} - успешность отправки
+         */
+        async function sendCommand(command) {
+            if (!characteristic || !isConnected) {
+                addLog('❌ Не подключено к ESP32!', 'error');
+                return false;
+            }
+            
+            try {
+                // Преобразуем строку в байты (UTF-8)
+                const encoder = new TextEncoder();
+                await characteristic.writeValue(encoder.encode(command));
+                addLog(`📤 Отправлено: ${command}`, 'send');
+                return true;
+            } catch (error) {
+                addLog(`❌ Ошибка отправки: ${error.message}`, 'error');
+                return false;
+            }
+        }
+        
+        /**
+         * Отправляет команду включения LED
+         */
+        function handleLEDOn() {
+            sendCommand('LED_ON');
+        }
+        
+        /**
+         * Отправляет команду выключения LED
+         */
+        function handleLEDOff() {
+            sendCommand('LED_OFF');
+        }
+        
+        // ========== НАСТРОЙКА УВЕДОМЛЕНИЙ ОТ ESP32 ==========
+        
+        /**
+         * Настраивает получение уведомлений от ESP32
+         * Уведомления - это способ, которым ESP32 может отправлять данные
+         * без запроса от клиента (например, при нажатии кнопок)
+         */
+        async function setupNotifications() {
+            if (!characteristic) return;
+            
+            try {
+                // Включаем уведомления для этой характеристики
+                await characteristic.startNotifications();
+                
+                // Устанавливаем обработчик, который будет вызываться при каждом уведомлении
+                characteristic.addEventListener('characteristicvaluechanged', (event) => {
+                    const value = event.target.value;           // Получаем байты
+                    const text = new TextDecoder().decode(value); // Преобразуем в строку
+                    handleDataFromESP32(text);
+                });
+                
+                addLog('✅ Уведомления настроены', 'success');
+            } catch (error) {
+                addLog(`❌ Ошибка настройки уведомлений: ${error.message}`, 'error');
+            }
+        }
+        
+        // ========== ПОДКЛЮЧЕНИЕ К ESP32 ==========
+        
+        /**
+         * Основная функция подключения к ESP32 через Web Bluetooth API
+         * Эта функция:
+         * 1. Проверяет поддержку Web Bluetooth в браузере
+         * 2. Запрашивает у пользователя выбор BLE устройства
+         * 3. Подключается к выбранному устройству
+         * 4. Получает сервис и характеристику
+         * 5. Настраивает уведомления
+         */
+        async function connectToESP32() {
+            // Проверка поддержки Web Bluetooth в браузере
+            if (!navigator.bluetooth) {
+                addLog('❌ Web Bluetooth не поддерживается в этом браузере!', 'error');
+                addLog('💡 Используйте Chrome, Edge или Opera', 'info');
+                alert('Web Bluetooth не поддерживается!\nИспользуйте Chrome, Edge или Opera');
+                return;
+            }
+            
+            addLog('🔍 Поиск ESP32...', 'info');
+            
+            try {
+                // Шаг 1: Запрашиваем у пользователя выбор устройства
+                // filters - ищем устройство с именем "ESP32_Demo_Device"
+                device = await navigator.bluetooth.requestDevice({
+                    filters: [
+                        { name: 'ESP32_Demo_Device' }
+                    ],
+                    optionalServices: [SERVICE_UUID]
+                });
+                
+                addLog(`✅ Найдено устройство: ${device.name || 'Без имени'}`, 'success');
+                deviceNameSpan.textContent = `Устройство: ${device.name || 'ESP32'}`;
+                
+                // Шаг 2: Подключаемся к GATT серверу устройства
+                addLog('🔌 Подключение...', 'info');
+                server = await device.gatt.connect();
+                addLog('✅ GATT сервер подключён', 'success');
+                
+                // Шаг 3: Получаем основной сервис по его UUID
+                addLog('🔍 Получение сервиса...', 'info');
+                const service = await server.getPrimaryService(SERVICE_UUID);
+                addLog('✅ Сервис получен', 'success');
+                
+                // Шаг 4: Получаем характеристику по её UUID
+                addLog('🔍 Получение характеристики...', 'info');
+                characteristic = await service.getCharacteristic(CHARACTERISTIC_UUID);
+                addLog('✅ Характеристика получена', 'success');
+                
+                // Шаг 5: Обновляем состояние подключения
+                isConnected = true;
+                updateUI();
+                
+                // Шаг 6: Настраиваем уведомления
+                await setupNotifications();
+                
+                addLog('🎉 Готово! Теперь можно управлять ESP32', 'success');
+                
+            } catch (error) {
+                addLog(`❌ Ошибка подключения: ${error.message}`, 'error');
+                
+                // Если подключились частично, но потом ошибка - отключаемся
+                if (device && device.gatt) {
+                    await device.gatt.disconnect();
+                }
+                
+                isConnected = false;
+                updateUI();
+            }
+        }
+        
+        // ========== ОТКЛЮЧЕНИЕ ОТ ESP32 ==========
+        
+        /**
+         * Отключается от ESP32 и очищает состояние
+         */
+        async function disconnect() {
+            if (device && device.gatt.connected) {
+                await device.gatt.disconnect();
+                addLog('🔌 Отключено от устройства', 'info');
+            }
+            
+            // Очищаем глобальные переменные
+            device = null;
+            server = null;
+            characteristic = null;
+            isConnected = false;
+            
+            updateUI();
+            ledIndicator.className = 'indicator indicator-off';
+        }
+        
+        // ========== ИНИЦИАЛИЗАЦИЯ И ОБРАБОТЧИКИ СОБЫТИЙ ==========
+        
+        // Назначаем обработчики нажатия кнопок
+        connectBtn.addEventListener('click', connectToESP32);
+        disconnectBtn.addEventListener('click', disconnect);
+        ledOnBtn.addEventListener('click', handleLEDOn);
+        ledOffBtn.addEventListener('click', handleLEDOff);
+        clearLogBtn.addEventListener('click', clearLog);
+        
+        // Отслеживаем изменение доступности Bluetooth в системе
+        if (navigator.bluetooth) {
+            navigator.bluetooth.addEventListener('availabilitychanged', (event) => {
+                if (!event.value) {
+                    addLog('⚠️ Bluetooth отключён в системе', 'warning');
+                } else {
+                    addLog('✅ Bluetooth доступен', 'success');
+                }
+            });
+        }
+        
+        // Приветственное сообщение при загрузке страницы
+        addLog('🚀 Страница загружена. Нажмите "Подключиться к ESP32"', 'info');
+        addLog('💡 Убедитесь, что ESP32 включена и транслирует BLE', 'info');
+        addLog('📌 Встроенный LED на ESP32 управляется с инверсией (исправлено!)', 'info');
+    </script>
 </body>
 </html>

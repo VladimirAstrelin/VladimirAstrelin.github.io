@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>STM32 LED Control</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>STM32 LED Control</h1>
+            <div class="status-area">
+                <span id="status">Отключено</span>
+                <button id="connectBtn">Подключиться</button>
+                <button id="disconnectBtn" disabled>Отключиться</button>
+            </div>
+        </header>
+        <main>
+            <section class="control-panel">
+                <h2>Управление светодиодом</h2>
+                <div class="led-buttons">
+                    <button id="ledOn" class="btn btn-on">Включить</button>
+                    <button id="ledOff" class="btn btn-off">Выключить</button>
+                    <button id="ledBlink" class="btn btn-blink">Мигать</button>
+                </div>
+                <div class="led-indicator">
+                    <div id="ledVisual" class="led-circle"></div>
+                </div>
+            </section>
+            <section class="log-panel">
+                <h2>Лог</h2>
+                <button id="clearLog">Очистить</button>
+                <div id="log"></div>
+            </section>
+        </main>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
